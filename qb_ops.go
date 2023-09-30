@@ -19,6 +19,7 @@ func (q *QbDB) Insert(data map[string]any) error {
 	}
 	columns, values, bindings := prepareBindings(data)
 	query := `INSERT INTO "` + builder.table + `" (` + strings.Join(columns, `, `) + `) VALUES(` + strings.Join(bindings, `, `) + `)`
+	setCacheExecuteStmt(query)
 	_, err := q.Sql().Exec(query, values...)
 	if err != nil {
 		return err
@@ -37,6 +38,7 @@ func (q *QbTxn) Insert(data map[string]any) error {
 	}
 	columns, values, bindings := prepareBindings(data)
 	query := `INSERT INTO "` + builder.table + `" (` + strings.Join(columns, `, `) + `) VALUES(` + strings.Join(bindings, `, `) + `)`
+	setCacheExecuteStmt(query)
 	_, err := q.Tx.Exec(query, values...)
 	if err != nil {
 		return err
@@ -55,6 +57,7 @@ func (q *QbDB) InsertGetId(data map[string]any) (uint64, error) {
 	}
 	columns, values, bindings := prepareBindings(data)
 	query := `INSERT INTO "` + builder.table + `" (` + strings.Join(columns, `, `) + `) VALUES(` + strings.Join(bindings, `, `) + `) RETURNING id`
+	setCacheExecuteStmt(query)
 	var id uint64
 	err := q.Sql().QueryRow(query, values...).Scan(&id)
 	if err != nil {
@@ -74,6 +77,7 @@ func (q *QbTxn) InsertGetId(data map[string]any) (uint64, error) {
 	}
 	columns, values, bindings := prepareBindings(data)
 	query := `INSERT INTO "` + builder.table + `" (` + strings.Join(columns, `, `) + `) VALUES(` + strings.Join(bindings, `, `) + `) RETURNING id`
+	setCacheExecuteStmt(query)
 	var id uint64
 	err := q.Tx.QueryRow(query, values...).Scan(&id)
 	if err != nil {
@@ -132,7 +136,6 @@ func (q *QbDB) Update(data map[string]any) (int64, error) {
 	setVal := ""
 	l := len(columns)
 	for k, col := range columns {
-		// setVal += col + " = " + bindings[k]
 		setVal += fmt.Sprintf("%s%s%s", col, " = ", bindings[k])
 		if k < l-1 {
 			setVal += ", "
@@ -140,12 +143,12 @@ func (q *QbDB) Update(data map[string]any) (int64, error) {
 	}
 	query := `UPDATE "` + q.Builder.table + `" SET ` + setVal
 	if IsStringNotEmpty(q.Builder.from) {
-		// query += " FROM " + q.Builder.from
 		query += fmt.Sprintf("%s%s", " FROM ", q.Builder.from)
 	}
 	q.Builder.startBindingsAt = l + 1
 	query += q.Builder.buildClauses()
 	values = append(values, prepareValues(q.Builder.whereBindings)...)
+	setCacheExecuteStmt(query)
 	result, err := q.Sql().Exec(query, values...)
 	if err != nil {
 		return 0, err
@@ -167,7 +170,6 @@ func (q *QbTxn) Update(data map[string]any) (int64, error) {
 	setVal := ""
 	l := len(columns)
 	for k, col := range columns {
-		// setVal += col + " = " + bindings[k]
 		setVal += fmt.Sprintf("%s%s%s", col, " = ", bindings[k])
 		if k < l-1 {
 			setVal += ", "
@@ -175,12 +177,12 @@ func (q *QbTxn) Update(data map[string]any) (int64, error) {
 	}
 	query := `UPDATE "` + q.Builder.table + `" SET ` + setVal
 	if IsStringNotEmpty(q.Builder.from) {
-		// query += " FROM " + q.Builder.from
 		query += fmt.Sprintf("%s%s", " FROM ", q.Builder.from)
 	}
 	q.Builder.startBindingsAt = l + 1
 	query += q.Builder.buildClauses()
 	values = append(values, prepareValues(q.Builder.whereBindings)...)
+	setCacheExecuteStmt(query)
 	result, err := q.Tx.Exec(query, values...)
 	if err != nil {
 		return 0, err
@@ -200,6 +202,7 @@ func (q *QbDB) Delete() (int64, error) {
 	}
 	query := `DELETE FROM "` + q.Builder.table + `"`
 	query += q.Builder.buildClauses()
+	setCacheExecuteStmt(query)
 	result, err := q.Sql().Exec(query, prepareValues(q.Builder.whereBindings)...)
 	if err != nil {
 		return 0, err
@@ -219,6 +222,7 @@ func (q *QbTxn) Delete() (int64, error) {
 	}
 	query := `DELETE FROM "` + q.Builder.table + `"`
 	query += q.Builder.buildClauses()
+	setCacheExecuteStmt(query)
 	result, err := q.Tx.Exec(query, prepareValues(q.Builder.whereBindings)...)
 	if err != nil {
 		return 0, err
@@ -242,6 +246,7 @@ func (q *QbDB) Replace(data map[string]any, conflict string) (int64, error) {
 		columns[i] = fmt.Sprintf("%s%s%s", v, " = excluded.", v)
 	}
 	query += strings.Join(columns, ", ")
+	setCacheExecuteStmt(query)
 	result, err := q.Sql().Exec(query, values...)
 	if err != nil {
 		return 0, err
@@ -265,6 +270,7 @@ func (q *QbTxn) Replace(data map[string]any, conflict string) (int64, error) {
 		columns[i] = fmt.Sprintf("%s%s%s", v, " = excluded.", v)
 	}
 	query += strings.Join(columns, ", ")
+	setCacheExecuteStmt(query)
 	result, err := q.Tx.Exec(query, values...)
 	if err != nil {
 		return 0, err

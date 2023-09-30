@@ -164,12 +164,16 @@ func (q *QbDB) Limit(value int64) *QbDB {
 
 // Drop drops >=1 tables
 func (q *QbDB) Drop(tables string) (sql.Result, error) {
-	return q.Sql().Exec(fmt.Sprintf("%s%s", "DROP TABLE ", tables))
+	query := fmt.Sprintf("%s%s", "DROP TABLE ", tables)
+	setCacheExecuteStmt(query)
+	return q.Sql().Exec(query)
 }
 
 // Truncate clears >=1 tables
 func (q *QbDB) Truncate(tables string) (sql.Result, error) {
-	return q.Sql().Exec(fmt.Sprintf("%s%s", "TRUNCATE ", tables))
+	query := fmt.Sprintf("%s%s", "TRUNCATE ", tables)
+	setCacheExecuteStmt(query)
+	return q.Sql().Exec(query)
 }
 
 // DropIfExists drops >=1 tables if they are existent
@@ -182,7 +186,9 @@ func (q *QbDB) DropIfExists(tables ...string) (result sql.Result, err error) {
 
 // Rename renames from - to new table name
 func (q *QbDB) Rename(from, to string) (sql.Result, error) {
-	return q.Sql().Exec(fmt.Sprintf("%s%s%s%s", "ALTER TABLE ", from, " RENAME TO ", to))
+	query := fmt.Sprintf("%s%s%s%s", "ALTER TABLE ", from, " RENAME TO ", to)
+	setCacheExecuteStmt(query)
+	return q.Sql().Exec(query)
 }
 
 // From prepares sql stmt to set data from another table, ex.:
@@ -219,6 +225,7 @@ func (q *QbDB) PrintQueryWithExit() {
 // HasTable determines whether table exists in particular schema
 func (q *QbDB) HasTable(schema, table string) (tblExists bool, err error) {
 	query := fmt.Sprintf("SELECT EXISTS (SELECT 1 FROM pg_tables WHERE  schemaname = '%s' AND tablename = '%s')", schema, table)
+	setCacheExecuteStmt(query)
 	err = q.Sql().QueryRow(query).Scan(&tblExists)
 	return
 }
@@ -229,8 +236,8 @@ func (q *QbDB) HasColumns(schema, table string, columns ...string) (colsExists b
 	for _, v := range columns { // todo: find a way to check columns in 1 query
 		andColumns = " AND column_name = '" + v + "'"
 		query := fmt.Sprintf("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='%s' AND table_name='%s'"+andColumns+")", schema, table)
+		setCacheExecuteStmt(query)
 		err = q.Sql().QueryRow(query).Scan(&colsExists)
-
 		if !colsExists { // if at least once col doesn't exist - return false, nil
 			return
 		}
@@ -245,6 +252,7 @@ func (q *QbDB) Exists() (ok bool, err error) {
 		return false, errTableCallBeforeOp
 	}
 	query := `SELECT EXISTS(SELECT 1 FROM "` + builder.table + `" ` + builder.buildClauses() + `)`
+	setCacheExecuteStmt(query)
 	err = q.Sql().QueryRow(query, prepareValues(q.Builder.whereBindings)...).Scan(&ok)
 	return
 }
@@ -307,7 +315,9 @@ func (q *QbDB) Chunk(amount int64, fn func(rows []map[string]interface{}) bool) 
 // buildSelect constructs a query for select statement
 func (q *qbBuilder) buildSelect() string {
 	query := `SELECT ` + strings.Join(q.columns, `, `) + ` FROM ` + q.table
-	return fmt.Sprintf("%s%s", query, q.buildClauses())
+	v := fmt.Sprintf("%s%s", query, q.buildClauses())
+	setCacheExecuteStmt(v)
+	return v
 }
 
 // builds query string clauses
@@ -352,9 +362,14 @@ func (q *QbDB) increaseAndDecrease(column, sign string, on uint64) (int64, error
 		return 0, errTableCallBeforeOp
 	}
 	query := `UPDATE "` + q.Builder.table + `" SET ` + column + ` = ` + column + sign + strconv.FormatUint(on, 10)
+	setCacheExecuteStmt(query)
 	result, err := q.Sql().Exec(query)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected()
+}
+
+func (q *QbDB) GetRawSQL() string {
+	return getCacheExecuteStmt()
 }

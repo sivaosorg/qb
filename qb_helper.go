@@ -337,3 +337,13 @@ func composeComment(tableName string, column *qbColumn) string {
 	}
 	return ""
 }
+
+// SetCacheExecuteStmt to storage query SQL native executed
+func setCacheExecuteStmt(query string) {
+	cacheExecuteStmt = query
+}
+
+// GetCacheExecuteStmt return the query SQL have just executed
+func getCacheExecuteStmt() string {
+	return cacheExecuteStmt
+}

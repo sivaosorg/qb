@@ -88,3 +88,8 @@ var (
 	errTableCallBeforeOp        = fmt.Errorf("sql: there was no Table() call with table name set")
 	errTransactionModeWithoutTx = fmt.Errorf("sql: there was no *sql.Tx object set properly")
 )
+
+var (
+	// Cache Execute Stmt will be stored value for the query SQL has been called before
+	cacheExecuteStmt string = ""
+)

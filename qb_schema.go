@@ -44,40 +44,6 @@ func (q *QbDB) SchemaIfNotExists(tableName string, fn func(table *QbTable) error
 	return
 }
 
-func (q *QbDB) createIndices(indices []string) (result sql.Result, err error) {
-	if len(indices) == 0 {
-		return nil, fmt.Errorf("Indices is empty")
-	}
-	for _, idx := range indices {
-		if idx != "" {
-			result, err = q.Sql().Exec(idx)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	return
-}
-
-func (q *QbDB) createComments(comments []string) (result sql.Result, err error) {
-	for _, comment := range comments {
-		if comment != "" {
-			result, err = q.Sql().Exec(comment)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	return
-}
-
-func (q *QbTable) composeTableComment() string {
-	if q.comment != nil {
-		return "COMMENT ON TABLE " + q.tableName + " IS '" + *q.comment + "'"
-	}
-	return ""
-}
-
 // Increments creates auto incremented primary key integer column
 func (q *QbTable) Increments(column string) *QbTable {
 	q.columns = append(q.columns, &qbColumn{Name: column, ColumnType: TypeSerial, IsPrimaryKey: true})
@@ -320,7 +286,7 @@ func (q *QbDB) createTable(t *QbTable) (result sql.Result, err error) {
 		comments = append(comments, composeComment(t.tableName, col))
 	}
 	query += ")"
-
+	setCacheExecuteStmt(query)
 	result, err = q.Sql().Exec(query)
 	if err != nil {
 		return nil, err
@@ -366,6 +332,7 @@ func (q *QbDB) modifyTable(t *QbTable) (result sql.Result, err error) {
 			query += SemiColon
 		}
 	}
+	setCacheExecuteStmt(query)
 	result, err = q.Sql().Exec(query)
 	if err != nil {
 		return nil, err
@@ -381,4 +348,38 @@ func (q *QbDB) modifyTable(t *QbTable) (result sql.Result, err error) {
 		return nil, err
 	}
 	return
+}
+
+func (q *QbDB) createIndices(indices []string) (result sql.Result, err error) {
+	if len(indices) == 0 {
+		return nil, fmt.Errorf("Indices is empty")
+	}
+	for _, idx := range indices {
+		if IsStringNotEmpty(idx) {
+			result, err = q.Sql().Exec(idx)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return
+}
+
+func (q *QbDB) createComments(comments []string) (result sql.Result, err error) {
+	for _, comment := range comments {
+		if IsStringNotEmpty(comment) {
+			result, err = q.Sql().Exec(comment)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return
+}
+
+func (q *QbTable) composeTableComment() string {
+	if q.comment != nil {
+		return "COMMENT ON TABLE " + q.tableName + " IS '" + *q.comment + "'"
+	}
+	return ""
 }
