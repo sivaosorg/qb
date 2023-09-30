@@ -12,7 +12,7 @@ QueryBuilder is a powerful and flexible Go library for building SQL queries with
 - JSON/JSONB Support: Seamlessly handle JSON and JSONB data types in your queries.
 - JOIN Operations: Perform INNER JOIN, LEFT JOIN, RIGHT JOIN, and FULL JOIN operations with JSON/JSONB columns.
 - Parameterized Queries: Safely construct parameterized queries to prevent SQL injection.
-- Alias Support: Assign aliases to tables for more readable and maintainable queries.
+<!-- - Alias Support: Assign aliases to tables for more readable and maintainable queries. -->
 
 ## Installation
 
