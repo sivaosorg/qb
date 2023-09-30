@@ -1,8 +1,10 @@
 package qb
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -17,6 +19,19 @@ func IsStringEmpty(s string) bool {
 
 func IsStringNotEmpty(s string) bool {
 	return !IsStringEmpty(s)
+}
+
+func JsonString(data interface{}) string {
+	s, ok := data.(string)
+	if ok {
+		return s
+	}
+	result, err := json.Marshal(data)
+	if err != nil {
+		log.Printf(err.Error())
+		return ""
+	}
+	return string(result)
 }
 
 func Interface2Slice(slice interface{}) ([]interface{}, error) {
@@ -157,7 +172,7 @@ func prepareSlice(in []any) (out []string) {
 
 // composes WHERE clause string for particular query stmt
 func composeWhere(whereBindings []map[string]any, startedAt int) string {
-	where := " WHERE "
+	where := " WHERE 1=1 " // where any level tables, combine with any condition
 	i := startedAt
 	for _, m := range whereBindings {
 		for k, v := range m {

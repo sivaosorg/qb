@@ -27,6 +27,10 @@ type QbTable struct {
 	comment   *string     `json:"-"`
 }
 
+type QbOps struct {
+	args map[string]interface{} `json:"-"`
+}
+
 type qbBuilder struct {
 	whereBindings   []map[string]any
 	startBindingsAt int
