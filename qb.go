@@ -162,6 +162,29 @@ func (q *QbDB) Limit(value int64) *QbDB {
 	return q
 }
 
+// Page for pagination
+func (q *QbDB) Page(value int64) *QbDB {
+	if value < 0 {
+		log.Fatalf("Invalid page: %v", value)
+	}
+	if value > 0 {
+		value = value - 1
+	}
+	q.Builder.page = value
+	return q
+}
+
+// Size for pagination
+func (q *QbDB) Size(value int64) *QbDB {
+	if value < 0 {
+		log.Fatalf("Invalid size(limit): %v", value)
+	}
+	q.Builder.size = value
+	q.Limit(value)
+	q.Offset(q.Builder.page * value)
+	return q
+}
+
 // Drop drops >=1 tables
 func (q *QbDB) Drop(tables string) (sql.Result, error) {
 	query := fmt.Sprintf("%s%s", "DROP TABLE ", tables)

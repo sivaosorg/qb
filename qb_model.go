@@ -47,6 +47,8 @@ type qbBuilder struct {
 	isUnionAll      bool
 	offset          int64
 	limit           int64
+	page            int64 // support pagination
+	size            int64 // support pagination
 	lockForUpdate   *string
 	whereExists     string
 }
