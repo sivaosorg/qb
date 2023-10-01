@@ -44,6 +44,7 @@ go get -u github.com/sivaosorg/qb
     - [Create Table](#create-table)
     - [Add / Modify / Drop columns](#add--modify--drop-columns)
     - [Chunk](#chunk)
+  - [Ref](#ref)
   - [Contribution](#contribution)
 
 ### Selects, Ordering, Limit and Offset
@@ -438,6 +439,11 @@ err = db.Table("or_user").Select("username").Where("user_id", "=", id).Chunk(300
     return true
 })
 ```
+
+## Ref
+
+- [PostgreSQL](https://popsql.com/learn-sql/postgresql)
+- [Quick tricks in PostgreSQL](https://www.freecodecamp.org/news/postgresql-tricks/)
 
 ## Contribution
 
